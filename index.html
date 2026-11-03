@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Number Guessing Master - An arcade web game featuring binary search AI, smart math clues, and multiple modes by Aditya Singh.">
+    <meta name="keywords" content="Number guessing game, binary search game, math clues, Python, JavaScript, Aditya Singh">
+    <meta name="author" content="Aditya Singh">
+    <title>Number Guessing Master | Web Arcade</title>
+
+    <!-- Stylesheet -->
+    <link rel="stylesheet" href="style.css">
+    
+    <!-- Favicon -->
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎮</text></svg>">
+</head>
+<body>
+
+    <!-- Ambient Lights -->
+    <div class="ambient-glow-top" aria-hidden="true"></div>
+    <div class="ambient-glow-bottom" aria-hidden="true"></div>
+
+    <!-- Header Navigation -->
+    <header class="site-header">
+        <div class="brand-title">
+            <span class="brand-icon">🎮</span>
+            <span>Number Guesser Master</span>
+        </div>
+        <div class="header-links">
+            <button class="sound-toggle-btn" id="soundToggleBtn" type="button" aria-label="Toggle sound">
+                <span id="soundIcon">🔊</span>
+            </button>
+            <a href="https://plainaditya-portfolio.vercel.app" class="nav-btn" target="_blank" rel="noopener noreferrer">
+                <span>← Portfolio</span>
+            </a>
+            <a href="https://github.com/plainaditya/Number-guessing-game" class="nav-btn" target="_blank" rel="noopener noreferrer">
+                <span>GitHub</span>
+            </a>
+        </div>
+    </header>
+
+    <!-- Main Arcade Container -->
+    <main class="main-wrapper">
+
+        <!-- Mode Switcher Tabs -->
+        <nav class="mode-switcher" aria-label="Game Modes">
+            <button class="mode-tab active" data-mode="classic" type="button">🎯 Classic Guessing</button>
+            <button class="mode-tab" data-mode="ai" type="button">🤖 AI Mind Reader</button>
+            <button class="mode-tab" data-mode="blitz" type="button">⚡ Speed Blitz (45s)</button>
+        </nav>
+
+        <!-- Main Game Card -->
+        <div class="game-card" id="gameCard">
+
+            <!-- Speed Blitz Timer (Visible only in blitz mode) -->
+            <div class="blitz-view" id="blitzView">
+                <div class="timer-bar-wrap">
+                    <div class="timer-header">
+                        <span>⚡ TIME REMAINING</span>
+                        <span id="blitzSeconds">45s</span>
+                    </div>
+                    <div class="timer-track">
+                        <div class="timer-fill" id="blitzTimerFill"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Classic Game View -->
+            <div id="classicView">
+                <!-- Difficulty Selection -->
+                <div class="difficulty-row">
+                    <button class="diff-btn" data-diff="easy" type="button">Easy (1–50)</button>
+                    <button class="diff-btn active" data-diff="medium" type="button">Medium (1–100)</button>
+                    <button class="diff-btn" data-diff="hard" type="button">Hard (1–250)</button>
+                    <button class="diff-btn" data-diff="nightmare" type="button">Nightmare (1–1000)</button>
+                </div>
+
+                <!-- Status Bar -->
+                <div class="game-status-bar">
+                    <div class="attempts-counter">
+                        <span>Lives:</span>
+                        <div class="hearts-container" id="heartsContainer"></div>
+                        <span id="attemptsCount" style="margin-left: 0.3rem; font-size: 0.78rem;"></span>
+                    </div>
+                    <div class="range-capsule" id="rangeCapsule">1 - 100</div>
+                </div>
+
+                <!-- Range Visual Progress Track -->
+                <div class="range-visual-wrap">
+                    <div class="range-labels">
+                        <span id="rangeMinLabel">1</span>
+                        <span>Narrow the Search Space</span>
+                        <span id="rangeMaxLabel">100</span>
+                    </div>
+                    <div class="range-track">
+                        <div class="range-progress-fill" id="rangeFill"></div>
+                    </div>
+                </div>
+
+                <!-- Feedback Display & Distance Radar -->
+                <div class="feedback-display">
+                    <h2 class="feedback-headline" id="feedbackHeadline">Pick a number between 1 &amp; 100</h2>
+                    <p class="feedback-temperature" id="feedbackTemp">Smart hints and distance radar active.</p>
+                </div>
+
+                <!-- Guess Input Form -->
+                <form class="input-form" id="guessForm" onsubmit="return false;">
+                    <input 
+                        type="number" 
+                        class="number-input-field" 
+                        id="guessInput" 
+                        placeholder="1 - 100" 
+                        autocomplete="off"
+                        autofocus
+                    >
+                    <button class="btn-guess" id="guessBtn" type="button">Submit Guess</button>
+                </form>
+
+                <!-- Actions: Clue & Reset -->
+                <div class="aux-actions-row">
+                    <button class="btn-hint" id="hintBtn" type="button">
+                        <span>💡 Request Math Clue</span>
+                    </button>
+                    <button class="btn-reset" id="resetBtn" type="button">
+                        <span>🔄 Reset Round</span>
+                    </button>
+                </div>
+
+                <!-- Hint Text Banner -->
+                <div class="hint-banner-box" id="hintBox">
+                    <span style="font-size: 1.3rem;">💡</span>
+                    <span id="hintText">Clue details</span>
+                </div>
+
+                <!-- History Tape -->
+                <div class="history-section">
+                    <div class="history-title">Previous Guesses</div>
+                    <div class="guess-pills-wrap" id="guessPillsWrap"></div>
+                </div>
+            </div>
+
+            <!-- Mode 2: AI Mind Reader View -->
+            <div class="ai-view" id="aiView">
+                <p class="ai-step-counter" id="aiStep">Step 1 • Search Space: [1 ... 100]</p>
+                <div class="ai-guess-num" id="aiGuessNum">50</div>
+                <p style="color: var(--text-muted); font-size: 0.95rem; margin-bottom: 1.5rem;">
+                    Think of a number between 1 and 100. Is my guess too high, too low, or correct?
+                </p>
+
+                <div class="ai-controls-group">
+                    <button class="ai-btn ai-btn-lower" id="aiLowerBtn" type="button">▼ Too High (Number is Lower)</button>
+                    <button class="ai-btn ai-btn-correct" id="aiCorrectBtn" type="button">🎯 You Got It!</button>
+                    <button class="ai-btn ai-btn-higher" id="aiHigherBtn" type="button">▲ Too Low (Number is Higher)</button>
+                </div>
+
+                <div class="ai-math-box">
+                    <strong>Binary Search Theory:</strong> Each guess cuts the search space exactly in half ($O(\log_2 N)$). For any number between 1 and 100, the AI is mathematically guaranteed to find it in <strong>7 steps or fewer</strong>!
+                </div>
+
+                <div style="margin-top: 1.5rem;">
+                    <button class="btn-reset" id="aiResetBtn" type="button">🔄 Start New AI Round</button>
+                </div>
+            </div>
+
+        </div>
+
+    </main>
+
+    <!-- Site Footer -->
+    <footer class="site-footer">
+        Crafted with clean JavaScript, HTML5 &amp; CSS3 by <a href="https://plainaditya-portfolio.vercel.app" target="_blank" rel="noopener noreferrer">Aditya Singh</a>.
+    </footer>
+
+    <!-- End Game Modal -->
+    <div class="end-modal-overlay" id="endModal">
+        <div class="end-modal-card">
+            <div class="modal-icon" id="modalIcon">🎉</div>
+            <h3 class="modal-title" id="modalTitle">VICTORY!</h3>
+            <p class="modal-subtitle" id="modalSubtitle">You found the secret number!</p>
+            <div class="modal-stats-grid">
+                <div class="modal-stat-box">
+                    <span id="modalScore">100 PTS</span>
+                    <span>Score</span>
+                </div>
+                <div class="modal-stat-box">
+                    <span id="modalAttempts">4 / 7</span>
+                    <span>Attempts</span>
+                </div>
+                <div class="modal-stat-box">
+                    <span id="modalTime">12.4s</span>
+                    <span>Time</span>
+                </div>
+            </div>
+            <button class="btn-play-again" id="playAgainBtn" type="button">Play Again</button>
+        </div>
+    </div>
+
+    <!-- Confetti Canvas -->
+    <canvas id="confettiCanvas"></canvas>
+
+    <!-- Script Engine -->
+    <script src="script.js"></script>
+</body>
+</html>
