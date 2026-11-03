@@ -1,93 +1,83 @@
 /**
  * ==============================================================================
- * NUMBER GUESSING MASTER (WEB ARCADE) - CLIENT GAME ENGINE
+ * NUMBER GUESSING GAME — MINIMALIST CLIENT ENGINE
  * Author: Aditya Singh (github.com/plainaditya)
- * Features: Multi-mode, Web Audio SFX, Confetti, Mathematical Hints, Persistent Stats
+ * Clean, restrained, classic gameplay.
  * ==============================================================================
  */
 
 (() => {
     // --------------------------------------------------------------------------
-    // 1. Web Audio Synthesizer (Zero External Dependencies)
+    // 1. Subtle Sound Synthesis (Web Audio API)
     // --------------------------------------------------------------------------
     let audioCtx = null;
-    let soundEnabled = true;
+    let soundOn = true;
 
-    function initAudio() {
+    function getAudioCtx() {
         if (!audioCtx) {
             audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         }
+        return audioCtx;
     }
 
-    function playTone(freq, type = 'sine', duration = 0.1, gain = 0.15) {
-        if (!soundEnabled) return;
+    function playTone(freq, type = 'sine', duration = 0.08, gain = 0.08) {
+        if (!soundOn) return;
         try {
-            initAudio();
-            const osc = audioCtx.createOscillator();
-            const g = audioCtx.createGain();
+            const ctx = getAudioCtx();
+            const osc = ctx.createOscillator();
+            const g = ctx.createGain();
             osc.type = type;
-            osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
-            g.gain.setValueAtTime(gain, audioCtx.currentTime);
-            g.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
+            osc.frequency.setValueAtTime(freq, ctx.currentTime);
+            g.gain.setValueAtTime(gain, ctx.currentTime);
+            g.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + duration);
             osc.connect(g);
-            g.connect(audioCtx.destination);
+            g.connect(ctx.destination);
             osc.start();
-            osc.stop(audioCtx.currentTime + duration);
+            osc.stop(ctx.currentTime + duration);
         } catch (_) {}
     }
 
-    const soundEffects = {
-        click: () => playTone(580, 'sine', 0.05, 0.08),
-        correct: () => {
-            if (!soundEnabled) return;
-            initAudio();
-            [523.25, 659.25, 783.99, 1046.5].forEach((freq, idx) => {
-                setTimeout(() => playTone(freq, 'triangle', 0.25, 0.2), idx * 80);
+    const sound = {
+        click: () => playTone(600, 'sine', 0.04, 0.05),
+        higher: () => playTone(360, 'sine', 0.1, 0.08),
+        lower: () => playTone(540, 'sine', 0.1, 0.08),
+        win: () => {
+            if (!soundOn) return;
+            [523.25, 659.25, 783.99, 1046.5].forEach((f, i) => {
+                setTimeout(() => playTone(f, 'sine', 0.22, 0.15), i * 90);
             });
         },
-        high: () => {
-            playTone(660, 'sawtooth', 0.08, 0.08);
-            setTimeout(() => playTone(440, 'sawtooth', 0.12, 0.08), 70);
-        },
-        low: () => {
-            playTone(330, 'sawtooth', 0.08, 0.08);
-            setTimeout(() => playTone(550, 'sawtooth', 0.12, 0.08), 70);
-        },
-        error: () => playTone(160, 'square', 0.2, 0.12),
-        hint: () => {
-            playTone(880, 'sine', 0.1, 0.1);
-            setTimeout(() => playTone(1174, 'sine', 0.15, 0.1), 90);
-        }
+        lose: () => playTone(180, 'triangle', 0.25, 0.1)
     };
 
     // --------------------------------------------------------------------------
-    // 2. Confetti Particle Engine
+    // 2. Confetti Particle Canvas
     // --------------------------------------------------------------------------
-    const confettiCanvas = document.getElementById('confettiCanvas');
-    const ctx = confettiCanvas.getContext('2d');
+    const canvas = document.getElementById('confettiCanvas');
+    const ctx = canvas.getContext('2d');
     let particles = [];
     let confettiActive = false;
 
-    function resizeCanvas() {
-        confettiCanvas.width = window.innerWidth;
-        confettiCanvas.height = window.innerHeight;
+    function resize() {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
     }
-    window.addEventListener('resize', resizeCanvas);
-    resizeCanvas();
+    window.addEventListener('resize', resize);
+    resize();
 
     function triggerConfetti() {
         particles = [];
-        const colors = ['#06b6d4', '#6366f1', '#10b981', '#f59e0b', '#ec4899', '#a855f7'];
-        for (let i = 0; i < 120; i++) {
+        const colors = ['#f1f3f7', '#8c93a3', '#10b981', '#3b82f6', '#f59e0b'];
+        for (let i = 0; i < 90; i++) {
             particles.push({
                 x: window.innerWidth / 2,
                 y: window.innerHeight / 2,
-                vx: (Math.random() - 0.5) * 16,
-                vy: (Math.random() - 0.7) * 16,
-                size: Math.random() * 8 + 4,
+                vx: (Math.random() - 0.5) * 14,
+                vy: (Math.random() - 0.7) * 14,
+                size: Math.random() * 6 + 3,
                 color: colors[Math.floor(Math.random() * colors.length)],
                 rotation: Math.random() * 360,
-                rotSpeed: (Math.random() - 0.5) * 10,
+                rotSpeed: (Math.random() - 0.5) * 8,
                 opacity: 1
             });
         }
@@ -97,14 +87,14 @@
 
     function animateConfetti() {
         if (!confettiActive) return;
-        ctx.clearRect(0, 0, confettiCanvas.width, confettiCanvas.height);
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
         let living = 0;
         particles.forEach(p => {
             p.x += p.vx;
             p.y += p.vy;
-            p.vy += 0.35; // gravity
+            p.vy += 0.32;
             p.rotation += p.rotSpeed;
-            p.opacity -= 0.008;
+            p.opacity -= 0.009;
 
             if (p.opacity > 0) {
                 living++;
@@ -113,76 +103,28 @@
                 ctx.rotate((p.rotation * Math.PI) / 180);
                 ctx.fillStyle = p.color;
                 ctx.globalAlpha = Math.max(0, p.opacity);
-                ctx.fillRect(-p.size / 2, -p.size / 2, p.size, p.size * 0.6);
+                ctx.fillRect(-p.size / 2, -p.size / 2, p.size, p.size * 0.7);
                 ctx.restore();
             }
         });
 
-        if (living > 0) {
-            requestAnimationFrame(animateConfetti);
-        } else {
+        if (living > 0) requestAnimationFrame(animateConfetti);
+        else {
             confettiActive = false;
-            ctx.clearRect(0, 0, confettiCanvas.width, confettiCanvas.height);
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
         }
     }
 
     // --------------------------------------------------------------------------
-    // 3. Mathematical Clue Engine
+    // 3. Game Data & Math Clues
     // --------------------------------------------------------------------------
-    function isPrime(num) {
-        if (num < 2) return false;
-        for (let i = 2; i <= Math.sqrt(num); i++) {
-            if (num % i === 0) return false;
-        }
-        return true;
-    }
-
-    function getClue(secret, usedClues) {
-        const pool = [];
-        const isEven = secret % 2 === 0;
-        pool.push(`The secret number is <strong>${isEven ? 'EVEN' : 'ODD'}</strong>.`);
-
-        [3, 5, 7, 10].forEach(d => {
-            if (secret % d === 0 && secret !== d) {
-                pool.push(`The secret number is cleanly divisible by <strong>${d}</strong>.`);
-            }
-        });
-
-        pool.push(`The secret number is <strong>${isPrime(secret) ? 'PRIME' : 'COMPOSITE'}</strong>.`);
-
-        const digitSum = String(secret).split('').reduce((sum, d) => sum + parseInt(d, 10), 0);
-        pool.push(`The sum of the number's digits is <strong>${digitSum}</strong>.`);
-
-        const fresh = pool.filter(c => !usedClues.includes(c));
-        if (fresh.length > 0) {
-            const picked = fresh[Math.floor(Math.random() * fresh.length)];
-            usedClues.push(picked);
-            return picked;
-        }
-        return `The secret number is within ±5 of ${secret + (Math.random() > 0.5 ? 2 : -2)}.`;
-    }
-
-    function getTemperature(guess, secret) {
-        const diff = Math.abs(guess - secret);
-        if (diff === 0) return '🎯 BULLSEYE!';
-        if (diff <= 3) return '🔥 BURNING HOT! (Within 3 numbers)';
-        if (diff <= 8) return '♨️ WARM! (Within 8 numbers)';
-        if (diff <= 20) return '❄️ COOL (Within 20 numbers)';
-        return '🧊 FREEZING (Very far away)';
-    }
-
-    // --------------------------------------------------------------------------
-    // 4. Game Configuration & State
-    // --------------------------------------------------------------------------
-    const DIFFICULTIES = {
-        easy: { min: 1, max: 50, attempts: 7 },
+    const CONFIGS = {
+        easy: { min: 1, max: 50, attempts: 6 },
         medium: { min: 1, max: 100, attempts: 7 },
-        hard: { min: 1, max: 250, attempts: 8 },
-        nightmare: { min: 1, max: 1000, attempts: 10 }
+        hard: { min: 1, max: 200, attempts: 8 }
     };
 
-    let currentMode = 'classic'; // 'classic' | 'ai' | 'blitz'
-    let currentDiff = 'medium';
+    let diff = 'medium';
     let secret = 0;
     let attemptsLeft = 7;
     let maxAttempts = 7;
@@ -190,124 +132,92 @@
     let highBound = 100;
     let originalMin = 1;
     let originalMax = 100;
-    let previousGuesses = [];
-    let usedClues = [];
-    let startTime = null;
+    let guesses = [];
+    let startTime = 0;
 
-    // AI Mode State
-    let aiLow = 1;
-    let aiHigh = 100;
-    let aiGuess = 50;
-    let aiStep = 0;
-
-    // Blitz Mode State
-    let blitzTimer = null;
-    let blitzSecondsRemaining = 45;
-    let blitzGuesses = 0;
-
-    // Persistent Stats
-    let stats = {
-        played: 0,
-        won: 0,
-        streak: 0,
-        bestStreak: 0,
-        highScore: 0
-    };
-
-    function loadStats() {
-        const saved = localStorage.getItem('number_guesser_stats');
-        if (saved) {
-            try { stats = JSON.parse(saved); } catch (_) {}
+    function isPrime(n) {
+        if (n < 2) return false;
+        for (let i = 2; i <= Math.sqrt(n); i++) {
+            if (n % i === 0) return false;
         }
+        return true;
     }
 
-    function saveStats() {
-        localStorage.setItem('number_guesser_stats', JSON.stringify(stats));
+    function generateClue(n) {
+        const clues = [];
+        clues.push(`The secret number is <strong>${n % 2 === 0 ? 'EVEN' : 'ODD'}</strong>.`);
+        [3, 5, 10].forEach(d => {
+            if (n % d === 0 && n !== d) clues.push(`The number is divisible by <strong>${d}</strong>.`);
+        });
+        clues.push(`The number is <strong>${isPrime(n) ? 'PRIME' : 'COMPOSITE'}</strong>.`);
+        const sum = String(n).split('').reduce((acc, d) => acc + parseInt(d, 10), 0);
+        clues.push(`The sum of its digits equals <strong>${sum}</strong>.`);
+        return clues[Math.floor(Math.random() * clues.length)];
     }
-
-    loadStats();
 
     // --------------------------------------------------------------------------
-    // 5. DOM References
+    // 4. DOM Elements
     // --------------------------------------------------------------------------
     const gameCard = document.getElementById('gameCard');
-    const classicView = document.getElementById('classicView');
-    const aiView = document.getElementById('aiView');
-    const blitzView = document.getElementById('blitzView');
-
-    const feedbackHeadline = document.getElementById('feedbackHeadline');
-    const feedbackTemp = document.getElementById('feedbackTemp');
-    const attemptsCountEl = document.getElementById('attemptsCount');
-    const heartsContainer = document.getElementById('heartsContainer');
-    const rangeCapsule = document.getElementById('rangeCapsule');
-    const rangeMinLabel = document.getElementById('rangeMinLabel');
-    const rangeMaxLabel = document.getElementById('rangeMaxLabel');
+    const attemptsPills = document.getElementById('attemptsPills');
+    const rangeBadge = document.getElementById('rangeBadge');
+    const promptTitle = document.getElementById('promptTitle');
+    const promptFeedback = document.getElementById('promptFeedback');
+    const rangeMin = document.getElementById('rangeMin');
+    const rangeMax = document.getElementById('rangeMax');
     const rangeFill = document.getElementById('rangeFill');
     const guessInput = document.getElementById('guessInput');
-    const guessBtn = document.getElementById('guessBtn');
-    const hintBtn = document.getElementById('hintBtn');
-    const hintBox = document.getElementById('hintBox');
-    const hintText = document.getElementById('hintText');
-    const guessPillsWrap = document.getElementById('guessPillsWrap');
-    const resetBtn = document.getElementById('resetBtn');
+    const submitBtn = document.getElementById('submitBtn');
+    const clueToggleBtn = document.getElementById('clueToggleBtn');
+    const clueBox = document.getElementById('clueBox');
+    const clueText = document.getElementById('clueText');
+    const newRoundBtn = document.getElementById('newRoundBtn');
+    const historyChips = document.getElementById('historyChips');
 
-    // AI View Elements
-    const aiStepEl = document.getElementById('aiStep');
-    const aiGuessNumEl = document.getElementById('aiGuessNum');
-    const aiHigherBtn = document.getElementById('aiHigherBtn');
-    const aiLowerBtn = document.getElementById('aiLowerBtn');
-    const aiCorrectBtn = document.getElementById('aiCorrectBtn');
-    const aiResetBtn = document.getElementById('aiResetBtn');
-
-    // Blitz View Elements
-    const blitzTimerFill = document.getElementById('blitzTimerFill');
-    const blitzSecondsEl = document.getElementById('blitzSeconds');
-
-    // Modal Elements
-    const endModal = document.getElementById('endModal');
-    const modalIcon = document.getElementById('modalIcon');
-    const modalTitle = document.getElementById('modalTitle');
-    const modalSubtitle = document.getElementById('modalSubtitle');
-    const modalScoreEl = document.getElementById('modalScore');
-    const modalAttemptsEl = document.getElementById('modalAttempts');
-    const modalTimeEl = document.getElementById('modalTime');
-    const playAgainBtn = document.getElementById('playAgainBtn');
-
-    // Header sound toggle
+    // Header Sound Toggle
     const soundToggleBtn = document.getElementById('soundToggleBtn');
     const soundIcon = document.getElementById('soundIcon');
     soundToggleBtn.addEventListener('click', () => {
-        soundEnabled = !soundEnabled;
-        soundIcon.textContent = soundEnabled ? '🔊' : '🔇';
+        soundOn = !soundOn;
+        soundIcon.textContent = soundOn ? '🔊' : '🔇';
     });
 
+    // Modal Elements
+    const resultModal = document.getElementById('resultModal');
+    const modalHeading = document.getElementById('modalHeading');
+    const modalSub = document.getElementById('modalSub');
+    const metricSecret = document.getElementById('metricSecret');
+    const metricAttempts = document.getElementById('metricAttempts');
+    const metricTime = document.getElementById('metricTime');
+    const modalPlayAgainBtn = document.getElementById('modalPlayAgainBtn');
+
     // --------------------------------------------------------------------------
-    // 6. Classic Mode Engine
+    // 5. Game Loop
     // --------------------------------------------------------------------------
-    function renderHearts() {
-        heartsContainer.innerHTML = '';
+    function renderAttemptPips() {
+        attemptsPills.innerHTML = '';
         for (let i = 0; i < maxAttempts; i++) {
-            const span = document.createElement('span');
-            span.textContent = i < attemptsLeft ? '❤️' : '🖤';
-            heartsContainer.appendChild(span);
+            const pip = document.createElement('div');
+            pip.className = `attempt-pip ${i < attemptsLeft ? 'active' : 'used'}`;
+            attemptsPills.appendChild(pip);
         }
     }
 
-    function updateRangeTrack() {
-        rangeCapsule.textContent = `${lowBound} - ${highBound}`;
-        rangeMinLabel.textContent = lowBound;
-        rangeMaxLabel.textContent = highBound;
+    function updateRangeBar() {
+        rangeBadge.textContent = `${lowBound} – ${highBound}`;
+        rangeMin.textContent = lowBound;
+        rangeMax.textContent = highBound;
 
-        const totalSpan = originalMax - originalMin;
-        const leftPct = ((lowBound - originalMin) / totalSpan) * 100;
-        const rightPct = ((originalMax - highBound) / totalSpan) * 100;
+        const total = originalMax - originalMin;
+        const leftPct = ((lowBound - originalMin) / total) * 100;
+        const rightPct = ((originalMax - highBound) / total) * 100;
 
         rangeFill.style.left = `${leftPct}%`;
         rangeFill.style.right = `${rightPct}%`;
     }
 
-    function initClassicGame() {
-        const conf = DIFFICULTIES[currentDiff];
+    function initGame() {
+        const conf = CONFIGS[diff];
         originalMin = conf.min;
         originalMax = conf.max;
         lowBound = conf.min;
@@ -315,22 +225,21 @@
         maxAttempts = conf.attempts;
         attemptsLeft = conf.attempts;
         secret = Math.floor(Math.random() * (conf.max - conf.min + 1)) + conf.min;
-        previousGuesses = [];
-        usedClues = [];
+        guesses = [];
         startTime = Date.now();
 
-        feedbackHeadline.textContent = `Pick a number between ${lowBound} & ${highBound}`;
-        feedbackHeadline.style.color = 'var(--text-main)';
-        feedbackTemp.textContent = 'Smart hints and distance radar active.';
-        attemptsCountEl.textContent = `${attemptsLeft} / ${maxAttempts}`;
+        promptTitle.textContent = 'Guess the number';
+        promptFeedback.textContent = `Enter an integer between ${lowBound} and ${highBound}.`;
+        promptFeedback.className = 'prompt-feedback';
         guessInput.value = '';
         guessInput.min = lowBound;
         guessInput.max = highBound;
-        guessInput.placeholder = `${lowBound} - ${highBound}`;
-        guessPillsWrap.innerHTML = '';
-        hintBox.classList.remove('visible');
-        renderHearts();
-        updateRangeTrack();
+        historyChips.innerHTML = '';
+        clueBox.classList.remove('visible');
+        resultModal.classList.remove('active');
+
+        renderAttemptPips();
+        updateRangeBar();
         guessInput.focus();
     }
 
@@ -338,65 +247,53 @@
         const val = parseInt(guessInput.value.trim(), 10);
         guessInput.value = '';
 
-        if (isNaN(val)) {
-            soundEffects.error();
-            feedbackHeadline.textContent = 'Enter a valid number!';
-            feedbackHeadline.style.color = 'var(--rose)';
+        if (isNaN(val) || val < originalMin || val > originalMax) {
+            promptFeedback.textContent = `Enter a number between ${originalMin} and ${originalMax}.`;
             return;
         }
 
-        if (val < originalMin || val > originalMax) {
-            soundEffects.error();
-            feedbackHeadline.textContent = `Out of bounds! Stay between ${originalMin} and ${originalMax}.`;
-            feedbackHeadline.style.color = 'var(--amber)';
+        if (guesses.includes(val)) {
+            promptFeedback.textContent = `You already tried ${val}. Pick another number.`;
             return;
         }
 
-        if (previousGuesses.includes(val)) {
-            soundEffects.error();
-            feedbackHeadline.textContent = `You already guessed ${val}!`;
-            feedbackHeadline.style.color = 'var(--violet)';
-            return;
-        }
-
-        previousGuesses.push(val);
+        guesses.push(val);
         attemptsLeft--;
-        attemptsCountEl.textContent = `${attemptsLeft} / ${maxAttempts}`;
-        renderHearts();
+        renderAttemptPips();
 
-        // Check Win
+        // Check Victory
         if (val === secret) {
             handleVictory();
             return;
         }
 
-        // Pill Tag
-        const pill = document.createElement('span');
-        pill.className = `guess-pill ${val > secret ? 'too-high' : 'too-low'}`;
-        pill.textContent = `${val} (${val > secret ? '↓' : '↑'})`;
-        guessPillsWrap.appendChild(pill);
-
-        // Shake Card on wrong guess
+        // Card Micro-Shake
         gameCard.classList.remove('shake');
-        void gameCard.offsetWidth; // retrigger reflow
+        void gameCard.offsetWidth;
         gameCard.classList.add('shake');
 
+        // History Tile
+        const tile = document.createElement('span');
+        tile.className = `history-tile ${val > secret ? 'lower' : 'higher'}`;
+        tile.innerHTML = `<span>${val}</span> <small>${val > secret ? '▼' : '▲'}</small>`;
+        historyChips.appendChild(tile);
+
         if (val < secret) {
-            soundEffects.low();
+            sound.higher();
             lowBound = Math.max(lowBound, val + 1);
-            feedbackHeadline.textContent = `📈 ${val} is TOO LOW!`;
-            feedbackHeadline.style.color = 'var(--rose)';
+            promptTitle.textContent = `${val} is too low`;
+            promptFeedback.textContent = 'Try a higher number.';
+            promptFeedback.className = 'prompt-feedback higher';
         } else {
-            soundEffects.high();
+            sound.lower();
             highBound = Math.min(highBound, val - 1);
-            feedbackHeadline.textContent = `📉 ${val} is TOO HIGH!`;
-            feedbackHeadline.style.color = 'var(--cyan)';
+            promptTitle.textContent = `${val} is too high`;
+            promptFeedback.textContent = 'Try a lower number.';
+            promptFeedback.className = 'prompt-feedback lower';
         }
 
-        feedbackTemp.textContent = getTemperature(val, secret);
-        updateRangeTrack();
+        updateRangeBar();
 
-        // Check Defeat
         if (attemptsLeft <= 0) {
             handleDefeat();
         } else {
@@ -405,204 +302,72 @@
     }
 
     function handleVictory() {
-        soundEffects.correct();
+        sound.win();
         triggerConfetti();
+        const duration = ((Date.now() - startTime) / 1000).toFixed(1);
+        const used = maxAttempts - attemptsLeft;
 
-        const timeSec = ((Date.now() - startTime) / 1000).toFixed(1);
-        const attemptsUsed = maxAttempts - attemptsLeft;
-        const score = Math.max(20, (maxAttempts * 20) + (attemptsLeft * 30) - (usedClues.length * 15));
-
-        stats.played++;
-        stats.won++;
-        stats.streak++;
-        if (stats.streak > stats.bestStreak) stats.bestStreak = stats.streak;
-        if (score > stats.highScore) stats.highScore = score;
-        saveStats();
-
-        modalIcon.textContent = '🎉';
-        modalTitle.textContent = 'VICTORY!';
-        modalSubtitle.textContent = `You successfully found the secret number ${secret}!`;
-        modalScoreEl.textContent = `${score} PTS`;
-        modalAttemptsEl.textContent = `${attemptsUsed} / ${maxAttempts}`;
-        modalTimeEl.textContent = `${timeSec}s`;
-        endModal.classList.add('active');
+        modalHeading.textContent = 'Spot on!';
+        modalSub.textContent = `You found the secret number with ${attemptsLeft} attempts remaining.`;
+        metricSecret.textContent = secret;
+        metricAttempts.textContent = `${used}/${maxAttempts}`;
+        metricTime.textContent = `${duration}s`;
+        resultModal.classList.add('active');
     }
 
     function handleDefeat() {
-        soundEffects.error();
-        stats.played++;
-        stats.streak = 0;
-        saveStats();
-
-        modalIcon.textContent = '💥';
-        modalTitle.textContent = 'GAME OVER';
-        modalSubtitle.textContent = `Out of attempts! The secret number was ${secret}.`;
-        modalScoreEl.textContent = `0 PTS`;
-        modalAttemptsEl.textContent = `${maxAttempts} / ${maxAttempts}`;
-        modalTimeEl.textContent = '--';
-        endModal.classList.add('active');
+        sound.lose();
+        modalHeading.textContent = 'Out of attempts';
+        modalSub.textContent = `The correct number was ${secret}. Better luck on the next run!`;
+        metricSecret.textContent = secret;
+        metricAttempts.textContent = `${maxAttempts}/${maxAttempts}`;
+        metricTime.textContent = '--';
+        resultModal.classList.add('active');
     }
 
     // Submit actions
-    guessBtn.addEventListener('click', () => {
-        soundEffects.click();
+    submitBtn.addEventListener('click', () => {
+        sound.click();
         handleGuess();
     });
 
     guessInput.addEventListener('keydown', (e) => {
         if (e.key === 'Enter') {
             e.preventDefault();
+            sound.click();
             handleGuess();
         }
     });
 
-    hintBtn.addEventListener('click', () => {
-        soundEffects.hint();
-        const clue = getClue(secret, usedClues);
-        hintText.innerHTML = clue;
-        hintBox.classList.add('visible');
+    // Clue Button
+    clueToggleBtn.addEventListener('click', () => {
+        sound.click();
+        clueText.innerHTML = generateClue(secret);
+        clueBox.classList.toggle('visible');
     });
 
-    resetBtn.addEventListener('click', () => {
-        soundEffects.click();
-        initClassicGame();
+    // Reset Buttons
+    newRoundBtn.addEventListener('click', () => {
+        sound.click();
+        initGame();
     });
 
-    playAgainBtn.addEventListener('click', () => {
-        soundEffects.click();
-        endModal.classList.remove('active');
-        if (currentMode === 'classic') initClassicGame();
-        else if (currentMode === 'blitz') initBlitzGame();
-        else initAiGame();
+    modalPlayAgainBtn.addEventListener('click', () => {
+        sound.click();
+        initGame();
     });
 
-    // Difficulty buttons
-    document.querySelectorAll('.diff-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
-            soundEffects.click();
-            document.querySelectorAll('.diff-btn').forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
-            currentDiff = btn.dataset.diff;
-            initClassicGame();
-        });
-    });
-
-    // --------------------------------------------------------------------------
-    // 7. Mode 2: AI Mind Reader (Binary Search Logic)
-    // --------------------------------------------------------------------------
-    function initAiGame() {
-        aiLow = 1;
-        aiHigh = 100;
-        aiStep = 1;
-        aiGuess = Math.floor((aiLow + aiHigh) / 2);
-        aiStepEl.textContent = `Step 1 • Binary Search Space: [1 ... 100]`;
-        aiGuessNumEl.textContent = aiGuess;
-    }
-
-    function updateAiGuess() {
-        aiStep++;
-        aiGuess = Math.floor((aiLow + aiHigh) / 2);
-        aiStepEl.textContent = `Step ${aiStep} • Search Space: [${aiLow} ... ${aiHigh}]`;
-        aiGuessNumEl.textContent = aiGuess;
-    }
-
-    aiHigherBtn.addEventListener('click', () => {
-        soundEffects.click();
-        aiLow = aiGuess + 1;
-        if (aiLow > aiHigh) {
-            alert('Wait, something is inconsistent! Double check your answers!');
-            initAiGame();
-            return;
-        }
-        updateAiGuess();
-    });
-
-    aiLowerBtn.addEventListener('click', () => {
-        soundEffects.click();
-        aiHigh = aiGuess - 1;
-        if (aiLow > aiHigh) {
-            alert('Wait, something is inconsistent! Double check your answers!');
-            initAiGame();
-            return;
-        }
-        updateAiGuess();
-    });
-
-    aiCorrectBtn.addEventListener('click', () => {
-        soundEffects.correct();
-        triggerConfetti();
-        modalIcon.textContent = '🤖';
-        modalTitle.textContent = 'AI GUESSED IT!';
-        modalSubtitle.textContent = `The AI found your number (${aiGuess}) in only ${aiStep} steps using Binary Search!`;
-        modalScoreEl.textContent = '100 PTS';
-        modalAttemptsEl.textContent = `${aiStep} steps`;
-        modalTimeEl.textContent = 'O(log N)';
-        endModal.classList.add('active');
-    });
-
-    aiResetBtn.addEventListener('click', () => {
-        soundEffects.click();
-        initAiGame();
-    });
-
-    // --------------------------------------------------------------------------
-    // 8. Mode 3: Speed Blitz
-    // --------------------------------------------------------------------------
-    function initBlitzGame() {
-        clearInterval(blitzTimer);
-        blitzSecondsRemaining = 45;
-        blitzGuesses = 0;
-        currentDiff = 'medium';
-        initClassicGame();
-
-        blitzSecondsEl.textContent = `${blitzSecondsRemaining}s`;
-        blitzTimerFill.style.width = '100%';
-
-        blitzTimer = setInterval(() => {
-            blitzSecondsRemaining--;
-            blitzSecondsEl.textContent = `${blitzSecondsRemaining}s`;
-            const pct = (blitzSecondsRemaining / 45) * 100;
-            blitzTimerFill.style.width = `${Math.max(0, pct)}%`;
-
-            if (blitzSecondsRemaining <= 0) {
-                clearInterval(blitzTimer);
-                handleDefeat();
-            }
-        }, 1000);
-    }
-
-    // --------------------------------------------------------------------------
-    // 9. Mode Switcher
-    // --------------------------------------------------------------------------
-    document.querySelectorAll('.mode-tab').forEach(tab => {
-        tab.addEventListener('click', () => {
-            soundEffects.click();
-            document.querySelectorAll('.mode-tab').forEach(t => t.classList.remove('active'));
-            tab.classList.add('active');
-            currentMode = tab.dataset.mode;
-
-            clearInterval(blitzTimer);
-            endModal.classList.remove('active');
-
-            if (currentMode === 'classic') {
-                classicView.style.display = 'block';
-                aiView.style.display = 'none';
-                blitzView.style.display = 'none';
-                initClassicGame();
-            } else if (currentMode === 'ai') {
-                classicView.style.display = 'none';
-                aiView.style.display = 'block';
-                blitzView.style.display = 'none';
-                initAiGame();
-            } else if (currentMode === 'blitz') {
-                classicView.style.display = 'block';
-                aiView.style.display = 'none';
-                blitzView.style.display = 'block';
-                initBlitzGame();
-            }
+    // Difficulty selection
+    document.querySelectorAll('.diff-chip').forEach(chip => {
+        chip.addEventListener('click', () => {
+            sound.click();
+            document.querySelectorAll('.diff-chip').forEach(c => c.classList.remove('active'));
+            chip.classList.add('active');
+            diff = chip.dataset.diff;
+            initGame();
         });
     });
 
     // Start on load
-    initClassicGame();
+    initGame();
 })();

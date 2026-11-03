@@ -3,202 +3,145 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Number Guessing Master - An arcade web game featuring binary search AI, smart math clues, and multiple modes by Aditya Singh.">
-    <meta name="keywords" content="Number guessing game, binary search game, math clues, Python, JavaScript, Aditya Singh">
-    <meta name="author" content="Aditya Singh">
-    <title>Number Guessing Master | Web Arcade</title>
+    <meta name="description" content="A clean, modern, and minimalist number guessing game by Aditya Singh.">
+    <title>Number Guess | Aditya Singh</title>
 
     <!-- Stylesheet -->
     <link rel="stylesheet" href="style.css">
     
     <!-- Favicon -->
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎮</text></svg>">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎯</text></svg>">
 </head>
 <body>
 
-    <!-- Ambient Lights -->
-    <div class="ambient-glow-top" aria-hidden="true"></div>
-    <div class="ambient-glow-bottom" aria-hidden="true"></div>
-
-    <!-- Header Navigation -->
+    <!-- Minimal Header -->
     <header class="site-header">
-        <div class="brand-title">
-            <span class="brand-icon">🎮</span>
-            <span>Number Guesser Master</span>
+        <div class="brand-wrap">
+            <span class="brand-title">Number Guess</span>
+            <span class="brand-badge">Classic</span>
         </div>
-        <div class="header-links">
-            <button class="sound-toggle-btn" id="soundToggleBtn" type="button" aria-label="Toggle sound">
+        <div class="header-actions">
+            <button class="icon-btn" id="soundToggleBtn" type="button" title="Toggle Sound" aria-label="Toggle sound">
                 <span id="soundIcon">🔊</span>
             </button>
-            <a href="https://plainaditya-portfolio.vercel.app" class="nav-btn" target="_blank" rel="noopener noreferrer">
-                <span>← Portfolio</span>
+            <a href="https://plainaditya-portfolio.vercel.app" class="portfolio-link" target="_blank" rel="noopener noreferrer">
+                Portfolio ↗
             </a>
-            <a href="https://github.com/plainaditya/Number-guessing-game" class="nav-btn" target="_blank" rel="noopener noreferrer">
-                <span>GitHub</span>
+            <a href="https://github.com/plainaditya/Number-guessing-game" class="icon-btn" target="_blank" rel="noopener noreferrer" title="View Source on GitHub">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
             </a>
         </div>
     </header>
 
-    <!-- Main Arcade Container -->
-    <main class="main-wrapper">
+    <!-- Main Content -->
+    <main class="main-content">
 
-        <!-- Mode Switcher Tabs -->
-        <nav class="mode-switcher" aria-label="Game Modes">
-            <button class="mode-tab active" data-mode="classic" type="button">🎯 Classic Guessing</button>
-            <button class="mode-tab" data-mode="ai" type="button">🤖 AI Mind Reader</button>
-            <button class="mode-tab" data-mode="blitz" type="button">⚡ Speed Blitz (45s)</button>
-        </nav>
+        <!-- Difficulty Chips -->
+        <div class="difficulty-selector" role="group" aria-label="Select Difficulty">
+            <button class="diff-chip" data-diff="easy" type="button">1 – 50</button>
+            <button class="diff-chip active" data-diff="medium" type="button">1 – 100</button>
+            <button class="diff-chip" data-diff="hard" type="button">1 – 200</button>
+        </div>
 
-        <!-- Main Game Card -->
+        <!-- The Game Card -->
         <div class="game-card" id="gameCard">
 
-            <!-- Speed Blitz Timer (Visible only in blitz mode) -->
-            <div class="blitz-view" id="blitzView">
-                <div class="timer-bar-wrap">
-                    <div class="timer-header">
-                        <span>⚡ TIME REMAINING</span>
-                        <span id="blitzSeconds">45s</span>
-                    </div>
-                    <div class="timer-track">
-                        <div class="timer-fill" id="blitzTimerFill"></div>
-                    </div>
+            <!-- Card Header: Lives and Bounds -->
+            <div class="card-header-status">
+                <div class="attempts-pills-bar" id="attemptsPills" aria-label="Attempts remaining"></div>
+                <div class="range-badge" id="rangeBadge">1 – 100</div>
+            </div>
+
+            <!-- Central Feedback & Prompt -->
+            <div class="prompt-area">
+                <h1 class="prompt-title" id="promptTitle">Guess the number</h1>
+                <p class="prompt-feedback" id="promptFeedback">Enter an integer between 1 and 100.</p>
+            </div>
+
+            <!-- Range Track (Visual Search Space) -->
+            <div class="range-track-container">
+                <div class="range-labels">
+                    <span id="rangeMin">1</span>
+                    <span id="rangeMax">100</span>
+                </div>
+                <div class="range-bar">
+                    <div class="range-fill" id="rangeFill"></div>
                 </div>
             </div>
 
-            <!-- Classic Game View -->
-            <div id="classicView">
-                <!-- Difficulty Selection -->
-                <div class="difficulty-row">
-                    <button class="diff-btn" data-diff="easy" type="button">Easy (1–50)</button>
-                    <button class="diff-btn active" data-diff="medium" type="button">Medium (1–100)</button>
-                    <button class="diff-btn" data-diff="hard" type="button">Hard (1–250)</button>
-                    <button class="diff-btn" data-diff="nightmare" type="button">Nightmare (1–1000)</button>
-                </div>
-
-                <!-- Status Bar -->
-                <div class="game-status-bar">
-                    <div class="attempts-counter">
-                        <span>Lives:</span>
-                        <div class="hearts-container" id="heartsContainer"></div>
-                        <span id="attemptsCount" style="margin-left: 0.3rem; font-size: 0.78rem;"></span>
-                    </div>
-                    <div class="range-capsule" id="rangeCapsule">1 - 100</div>
-                </div>
-
-                <!-- Range Visual Progress Track -->
-                <div class="range-visual-wrap">
-                    <div class="range-labels">
-                        <span id="rangeMinLabel">1</span>
-                        <span>Narrow the Search Space</span>
-                        <span id="rangeMaxLabel">100</span>
-                    </div>
-                    <div class="range-track">
-                        <div class="range-progress-fill" id="rangeFill"></div>
-                    </div>
-                </div>
-
-                <!-- Feedback Display & Distance Radar -->
-                <div class="feedback-display">
-                    <h2 class="feedback-headline" id="feedbackHeadline">Pick a number between 1 &amp; 100</h2>
-                    <p class="feedback-temperature" id="feedbackTemp">Smart hints and distance radar active.</p>
-                </div>
-
-                <!-- Guess Input Form -->
-                <form class="input-form" id="guessForm" onsubmit="return false;">
+            <!-- Input Group -->
+            <form id="guessForm" onsubmit="return false;">
+                <div class="input-group">
                     <input 
                         type="number" 
-                        class="number-input-field" 
+                        class="guess-field" 
                         id="guessInput" 
-                        placeholder="1 - 100" 
-                        autocomplete="off"
+                        placeholder="Your guess" 
+                        autocomplete="off" 
+                        inputmode="numeric"
                         autofocus
                     >
-                    <button class="btn-guess" id="guessBtn" type="button">Submit Guess</button>
-                </form>
-
-                <!-- Actions: Clue & Reset -->
-                <div class="aux-actions-row">
-                    <button class="btn-hint" id="hintBtn" type="button">
-                        <span>💡 Request Math Clue</span>
-                    </button>
-                    <button class="btn-reset" id="resetBtn" type="button">
-                        <span>🔄 Reset Round</span>
-                    </button>
+                    <button class="btn-submit" id="submitBtn" type="button">Guess</button>
                 </div>
+            </form>
 
-                <!-- Hint Text Banner -->
-                <div class="hint-banner-box" id="hintBox">
-                    <span style="font-size: 1.3rem;">💡</span>
-                    <span id="hintText">Clue details</span>
-                </div>
-
-                <!-- History Tape -->
-                <div class="history-section">
-                    <div class="history-title">Previous Guesses</div>
-                    <div class="guess-pills-wrap" id="guessPillsWrap"></div>
-                </div>
+            <!-- Card Actions -->
+            <div class="card-actions-row">
+                <button class="subtle-btn" id="clueToggleBtn" type="button">
+                    <span>Need a clue?</span>
+                </button>
+                <button class="subtle-btn" id="newRoundBtn" type="button">
+                    <span>New round</span>
+                </button>
             </div>
 
-            <!-- Mode 2: AI Mind Reader View -->
-            <div class="ai-view" id="aiView">
-                <p class="ai-step-counter" id="aiStep">Step 1 • Search Space: [1 ... 100]</p>
-                <div class="ai-guess-num" id="aiGuessNum">50</div>
-                <p style="color: var(--text-muted); font-size: 0.95rem; margin-bottom: 1.5rem;">
-                    Think of a number between 1 and 100. Is my guess too high, too low, or correct?
-                </p>
+            <!-- Clue Box -->
+            <div class="clue-box" id="clueBox">
+                <span id="clueText">Clue details</span>
+            </div>
 
-                <div class="ai-controls-group">
-                    <button class="ai-btn ai-btn-lower" id="aiLowerBtn" type="button">▼ Too High (Number is Lower)</button>
-                    <button class="ai-btn ai-btn-correct" id="aiCorrectBtn" type="button">🎯 You Got It!</button>
-                    <button class="ai-btn ai-btn-higher" id="aiHigherBtn" type="button">▲ Too Low (Number is Higher)</button>
-                </div>
-
-                <div class="ai-math-box">
-                    <strong>Binary Search Theory:</strong> Each guess cuts the search space exactly in half ($O(\log_2 N)$). For any number between 1 and 100, the AI is mathematically guaranteed to find it in <strong>7 steps or fewer</strong>!
-                </div>
-
-                <div style="margin-top: 1.5rem;">
-                    <button class="btn-reset" id="aiResetBtn" type="button">🔄 Start New AI Round</button>
-                </div>
+            <!-- Guess History (Wordle Style) -->
+            <div class="history-wrap">
+                <div class="history-label">Previous Guesses</div>
+                <div class="history-chips" id="historyChips"></div>
             </div>
 
         </div>
 
     </main>
 
-    <!-- Site Footer -->
+    <!-- Clean Minimal Footer -->
     <footer class="site-footer">
-        Crafted with clean JavaScript, HTML5 &amp; CSS3 by <a href="https://plainaditya-portfolio.vercel.app" target="_blank" rel="noopener noreferrer">Aditya Singh</a>.
+        Designed &amp; built by <a href="https://plainaditya-portfolio.vercel.app" target="_blank" rel="noopener noreferrer">Aditya Singh</a>.
     </footer>
 
-    <!-- End Game Modal -->
-    <div class="end-modal-overlay" id="endModal">
-        <div class="end-modal-card">
-            <div class="modal-icon" id="modalIcon">🎉</div>
-            <h3 class="modal-title" id="modalTitle">VICTORY!</h3>
-            <p class="modal-subtitle" id="modalSubtitle">You found the secret number!</p>
-            <div class="modal-stats-grid">
-                <div class="modal-stat-box">
-                    <span id="modalScore">100 PTS</span>
-                    <span>Score</span>
+    <!-- Result Modal -->
+    <div class="modal-backdrop" id="resultModal">
+        <div class="modal-dialog">
+            <h3 id="modalHeading">You got it!</h3>
+            <p id="modalSub">Found the number in 4 attempts.</p>
+            <div class="modal-metrics">
+                <div class="metric-item">
+                    <span id="metricSecret">--</span>
+                    <span>Secret</span>
                 </div>
-                <div class="modal-stat-box">
-                    <span id="modalAttempts">4 / 7</span>
-                    <span>Attempts</span>
+                <div class="metric-item">
+                    <span id="metricAttempts">--</span>
+                    <span>Guesses</span>
                 </div>
-                <div class="modal-stat-box">
-                    <span id="modalTime">12.4s</span>
+                <div class="metric-item">
+                    <span id="metricTime">--</span>
                     <span>Time</span>
                 </div>
             </div>
-            <button class="btn-play-again" id="playAgainBtn" type="button">Play Again</button>
+            <button class="btn-action-primary" id="modalPlayAgainBtn" type="button">Play Again</button>
         </div>
     </div>
 
     <!-- Confetti Canvas -->
     <canvas id="confettiCanvas"></canvas>
 
-    <!-- Script Engine -->
+    <!-- Game Script -->
     <script src="script.js"></script>
 </body>
 </html>
